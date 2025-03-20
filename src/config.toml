@@ -1,0 +1,2 @@
+[netbox]
+api_limit = "10"
