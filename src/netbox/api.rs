@@ -1,11 +1,11 @@
 use anyhow::{anyhow, Result};
 use futures::{stream, StreamExt};
-use reqwest::{Client, Error as ReqwestError};
+use reqwest::{Client, Error as ReqwestError, StatusCode};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, io::ErrorKind, sync::Arc};
 use tokio::sync::Semaphore;
 
-use crate::config::NetBoxConfig;
+use crate::{config::NetBoxConfig, netbox::models};
 use async_trait::async_trait;
 
 #[async_trait]
@@ -19,6 +19,13 @@ pub struct ApiClient {
     api_url: String,
     api_key: String,
     api_limit: usize,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct NetBoxResponse<T> {
+    count: i32,
+    next: String,
+    results: Vec<T>,
 }
 
 impl ApiClient {
@@ -37,7 +44,7 @@ impl ApiClient {
 
     pub async fn sync_objects<T>(&self, objects: Vec<T>, semaphore: Arc<Semaphore>, name: &str)
     where
-        T: CreateTable + std::fmt::Debug + Send + Sync + 'static,
+        T: CreateTable + 'static,
     {
         let client = Arc::new(self.clone());
         let api_limit = self.api_limit;
@@ -65,21 +72,53 @@ impl ApiClient {
     }
 
     // Generic GET request
-    pub async fn get<T>(&self, endpoint: &str) -> Result<T, ReqwestError>
+    pub async fn get<T>(&self, endpoint: &str, id: Option<i32>) -> Result<Vec<T>, ReqwestError>
     where
-        T: for<'de> Deserialize<'de>,
+        T: for<'de> Deserialize<'de> + Debug,
     {
-        let url = format!("{}{}", self.api_url, endpoint);
+        let mut next_link = match id {
+            Some(id) => format!("{}/{}/{}", self.api_url, endpoint, id),
+            None => format!("{}/{}", self.api_url, endpoint),
+        };
+        let mut results: Vec<T> = Vec::new();
 
-        let response = self
-            .client
-            .get(&url)
-            .header("Authorization", format!("Token {}", self.api_key))
-            .header("Content-Type", "application/json")
-            .send()
-            .await?;
+        while !next_link.is_empty() {
+            let response = self
+                .client
+                .get(&next_link)
+                .header("Authorization", format!("Token {}", self.api_key))
+                .header("Content-Type", "application/json")
+                .send()
+                .await?;
 
-        response.json::<T>().await
+            match response.status() {
+                StatusCode::OK => {
+                    println!("Test before extraction");
+                    let response_data: NetBoxResponse<T> = response.json().await?;
+                    println!("Test after extraction");
+                    results.extend(response_data.results);
+                    if response_data.next.is_empty() {
+                        break;
+                    } else {
+                        next_link = response_data.next;
+                    }
+                }
+                _ => {
+                    eprintln!(
+                        "Failed to get data from {}: {}",
+                        next_link,
+                        response.status()
+                    );
+                }
+            }
+        }
+
+        println!("len results: {}", results.len());
+        if results.len() > 0 {
+            println!("first result: {:?}", results.first());
+        }
+
+        Ok(results)
     }
 
     // Generic POST request
@@ -88,7 +127,9 @@ impl ApiClient {
         T: for<'de> Deserialize<'de>,
         B: Serialize + Debug,
     {
-        let url = format!("{}{}", self.api_url, endpoint);
+        let url = format!("{}/{}/", self.api_url, endpoint);
+
+        println!("POST request: {} - {:?}", url, body);
 
         let response = self
             .client

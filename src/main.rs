@@ -1,21 +1,18 @@
-#[allow(unused_imports)]
+mod cache;
 mod config;
 mod fetch;
 mod netbox;
 mod utils;
 
-use crate::fetch::azure::AzureClient;
-#[allow(unused_imports)]
+use cache::Cache;
 use dotenv::dotenv;
-use netbox::{
-    dcim, ipam,
-    tenancy::{self, Contact},
-    vm,
+use netbox::models::{
+    self, Contact, ContactList, DeviceRole, DeviceType, Manufacturer, NetBoxObject, Site, Status,
 };
 use std::sync::Arc;
 use tokio::{
     self,
-    sync::{Mutex, Semaphore},
+    sync::{Mutex, RwLock, Semaphore},
     time::Instant,
 };
 
@@ -23,19 +20,25 @@ use tokio::{
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start_time = Instant::now();
 
-    dotenv().ok();
-    let settings = config::load()?;
-
-    let azure_client = Arc::new(AzureClient::new(&settings.azure).await?);
-
-    let netbox_client = Arc::new(netbox::api::ApiClient::new(&settings.netbox));
-
-    let semaphore = Arc::new(Semaphore::new(10));
-
     // Start prep timer
     let prep_timer = Instant::now();
     // Complete preparation tasks like building the cache, fetching data, ... that needs to
     // complete before parsing and uploading.
+
+    dotenv().ok();
+    let settings = config::load()?;
+
+    // Ready the NetBox cache
+    let mut nb_cache = Arc::new(RwLock::new(Cache::new()));
+
+    // Ready the collector clients for Azure, FortiGate & ESET
+    let azure_client = Arc::new(fetch::azure::AzureClient::new(&settings.azure).await?);
+
+    // Ready the NetBox client for interacting with the NetBox API
+    let netbox_client = Arc::new(netbox::api::ApiClient::new(&settings.netbox));
+
+    // Create the semaphpore to allow limited concurrent api interractions
+    let semaphore = Arc::new(Semaphore::new(settings.netbox.api_limit.clone()));
 
     // spawn threads for data collection tasks
     let users_task = {
@@ -47,32 +50,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tokio::spawn(async move { azure_client.fetch_devices().await })
     };
 
+    // collect contacts from netbox
+    let nb_contacts_task = {
+        let netbox_client = Arc::clone(&netbox_client);
+        tokio::spawn(async move {
+            netbox_client
+                .get::<ContactList>("tenancy/contacts", None)
+                .await
+        })
+    };
+
     // can add a print statement here to showcase the tasks above have not neccessarily started or
     // ran yet
 
     // await the data collection tasks before contiuning
-    let (users_res, intune_devices_res) = tokio::join!(users_task, intune_devices_task);
+    let (users_res, intune_devices_res, nb_contact_res) =
+        tokio::join!(users_task, intune_devices_task, nb_contacts_task);
 
     let users = utils::extract_vec(users_res).await;
     let intune_devices = utils::extract_vec(intune_devices_res).await;
+
+    // print all contacts from netbox
+    println!("nb contact obj pre extraction: {:?}", nb_contact_res);
+    let nb_contacts = nb_contact_res.unwrap();
+    //let nb_contacts = utils::extract_vec(nb_contact_res).await;
+    println!("nb contact obj: {:?}", nb_contacts);
+    //println!("NetBox contact count: {}", nb_contacts.len());
+    //for contact in nb_contacts {
+    //  println!("NetBox contact: {:?}", contact);
+    //}
 
     let prep_elapsed = prep_timer.elapsed();
 
     // Start parse timer
     let parse_timer = Instant::now();
-
-    let parsed_contacts = Arc::new(Mutex::new(vec![
-        Contact::new("test_1".to_string()),
-        Contact::new("test_2".to_string()),
-        Contact::new("test_3".to_string()),
-        Contact::new("test_4".to_string()),
-        Contact::new("test_5".to_string()),
-        Contact::new("test_6".to_string()),
-        Contact::new("test_7".to_string()),
-        Contact::new("test_8".to_string()),
-        Contact::new("test_9".to_string()),
-        Contact::new("test_10".to_string()),
-    ]));
 
     // Stop parse timer
     let parse_elapsed = parse_timer.elapsed();
