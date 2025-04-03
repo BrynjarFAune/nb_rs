@@ -7,6 +7,7 @@ use std::path::Path;
 pub struct Settings {
     pub netbox: NetBoxConfig,
     pub azure: AzureConfig,
+    pub fortigate: FortiGateConfig,
     // add eset, azure, foritgate, ...
 }
 
@@ -23,6 +24,12 @@ pub struct AzureConfig {
     pub client_secret: String,
     pub tenant_id: String,
     pub url: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FortiGateConfig {
+    pub url: String,
+    pub token: String,
 }
 
 pub fn load() -> Result<Settings, ConfigError> {

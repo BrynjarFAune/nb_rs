@@ -28,6 +28,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
     let settings = config::load()?;
     let azure_client = Arc::new(fetch::azure::AzureClient::new(&settings.azure).await?);
+    let fortigate_client =
+        Arc::new(fetch::fortigate::FortiGateClient::new(&settings.fortigate).await?);
     let netbox_client = Arc::new(netbox::api::ApiClient::new(&settings.netbox));
     let semaphore = Arc::new(Semaphore::new(settings.netbox.api_limit.clone()));
 
@@ -41,11 +43,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Get data
     let azure_contacts_future = azure_client.fetch_users().map_err(Into::into);
     let azure_devices_future = azure_client.fetch_devices().map_err(Into::into);
+    let fortigate_devices_future = fortigate_client.fetch_devices().map_err(Into::into);
 
-    let (local_cache, azure_contacts, azure_devices) =
-        tokio::try_join!(cache_future, azure_contacts_future, azure_devices_future)?;
+    let (local_cache, azure_contacts, azure_devices, fortigate_devices) = tokio::try_join!(
+        cache_future,
+        azure_contacts_future,
+        azure_devices_future,
+        fortigate_devices_future
+    )?;
 
     println!("Azure device: {:?}", azure_devices.first());
+    println!("FortiGate device: {:?}", fortigate_devices.first());
+    println!("Found {} devices via fortigate", fortigate_devices.len());
 
     // Push data to netbox
 
