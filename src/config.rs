@@ -28,38 +28,9 @@ pub struct AzureConfig {
 pub fn load() -> Result<Settings, ConfigError> {
     let config_dir = env::var("CONFIG_DIR").unwrap_or_else(|_| "./src".into());
 
-    let mut builder =
-        Config::builder().add_source(File::with_name(&format!("{}/config.toml", config_dir)));
-
-    if let Ok(url) = env::var("NETBOX_API_URL") {
-        builder = builder.set_override("netbox.api_url", url)?;
-    }
-
-    if let Ok(key) = env::var("NETBOX_API_KEY") {
-        builder = builder.set_override("netbox.api_key", key)?;
-    }
-
-    if let Ok(limit) = env::var("NETBOX_API_LIMIT") {
-        builder = builder.set_override("netbox.api_limit", limit)?;
-    }
-
-    if let Ok(url) = env::var("AZURE_URL") {
-        builder = builder.set_override("azure.url", url)?;
-    }
-
-    if let Ok(client_id) = env::var("CLIENT_ID") {
-        builder = builder.set_override("azure.client_id", client_id)?;
-    }
-
-    if let Ok(tenant_id) = env::var("TENANT_ID") {
-        builder = builder.set_override("azure.tenant_id", tenant_id)?;
-    }
-
-    if let Ok(client_secret) = env::var("CLIENT_SECRET") {
-        builder = builder.set_override("azure.client_secret", client_secret)?;
-    }
-
-    let config = builder.build()?;
+    let config = Config::builder()
+        .add_source(File::with_name(&format!("{}/config.toml", config_dir)))
+        .build()?;
 
     config.try_deserialize()
 }

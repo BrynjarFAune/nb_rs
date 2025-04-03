@@ -1,0 +1,10 @@
+[netbox]
+api_limit = "50"
+api_url = "http://netbox:8000/api"
+api_key = "replace with netbox api key"
+
+[azure]
+client_id = "replace with client id"
+client_secret = "replace with client secret"
+tenant_id = "replace with tenant id"
+url = "https://graph.microsoft.com/v1.0"

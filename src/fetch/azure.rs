@@ -84,7 +84,7 @@ impl AzureClient {
     pub async fn fetch_token(client: &Client, config: &AzureConfig) -> anyhow::Result<String> {
         let params = [
             ("client_id", &config.client_id),
-            ("client_secret", &"".to_string()),
+            ("client_secret", &config.client_secret),
             ("scope", &"https://graph.microsoft.com/.default".to_string()),
             ("grant_type", &"client_credentials".to_string()),
         ];
