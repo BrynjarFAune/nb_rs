@@ -1,9 +1,10 @@
 use crate::config::AzureConfig;
+use anyhow::anyhow;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client, StatusCode,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::Debug;
 
@@ -17,37 +18,39 @@ pub struct AzureClient {
 #[derive(Debug, Deserialize)]
 pub struct IntuneDevice {
     #[serde(rename = "deviceName")]
-    name: String,
+    pub name: String,
     #[serde(rename = "enrolledDateTime")]
-    enrolled: String,
+    pub enrolled: String,
     #[serde(rename = "lastSyncDateTime")]
-    synced: String,
+    pub synced: String,
     #[serde(rename = "operatingSystem")]
-    os: String,
+    pub os: String,
     #[serde(rename = "osVersion")]
-    os_version: String,
+    pub os_version: String,
     #[serde(rename = "managementAgent")]
-    management_agend: String,
+    pub management_agend: String,
     #[serde(rename = "emailAddress")]
-    user: String,
-    model: String,
-    manufacturer: String,
+    pub user: String,
+    pub model: String,
+    pub manufacturer: String,
     #[serde(rename = "serialNumber")]
-    serial: String,
+    pub serial: String,
     #[serde(rename = "wiFiMacAddress")]
-    wifi_mac: String,
+    pub wifi_mac: String,
     #[serde(rename = "totalStorageSpaceInBytes")]
-    total_storage: usize,
+    pub total_storage: usize,
     #[serde(rename = "freeStorageSpaceInBytes")]
-    free_storage: usize,
+    pub free_storage: usize,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct IntuneUser {
     #[serde(rename = "displayName")]
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub mail: Option<String>,
     #[serde(rename = "jobTitle")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
 }
 
@@ -68,8 +71,8 @@ struct DevicesResponse {
 impl AzureClient {
     pub async fn new(config: &AzureConfig) -> anyhow::Result<Self> {
         let client = Client::new();
-        let token = Self::fetch_token(&client, &config).await?;
         let url = &config.url;
+        let token = Self::fetch_token(&client, &config).await?;
 
         Ok(AzureClient {
             client,
@@ -81,7 +84,7 @@ impl AzureClient {
     pub async fn fetch_token(client: &Client, config: &AzureConfig) -> anyhow::Result<String> {
         let params = [
             ("client_id", &config.client_id),
-            ("client_secret", &config.client_secret),
+            ("client_secret", &"".to_string()),
             ("scope", &"https://graph.microsoft.com/.default".to_string()),
             ("grant_type", &"client_credentials".to_string()),
         ];
@@ -95,13 +98,34 @@ impl AzureClient {
             .send()
             .await?;
 
-        let res_json: Value = res.json().await?;
+        println!("Response status: {}", res.status());
+
+        let res_text = res.text().await?;
+
+        let res_json: Value = match serde_json::from_str(&res_text) {
+            Ok(json) => json,
+            Err(e) => return Err(anyhow::anyhow!("Failed to parse response as JSON: {}", e)),
+        };
+
         let token = res_json["access_token"]
             .as_str()
-            .ok_or_else(|| anyhow::anyhow!("Failed to retrieve token"))?
+            .ok_or_else(|| {
+                let error_msg = res_json["error_description"]
+                    .as_str()
+                    .unwrap_or("No error description provided");
+                anyhow!("Failed to retrieve token: {}", error_msg)
+            })?
             .to_string();
-
         Ok(token)
+
+        /*
+                let res_json: Value = res.json().await?;
+                let token = res_json["access_token"]
+                    .as_str()
+                    .ok_or_else(|| anyhow::anyhow!("Failed to retrieve token"))?
+                    .to_string();
+                Ok(token)
+        */
     }
 
     pub async fn fetch_users(&self) -> Result<Vec<IntuneUser>, reqwest::Error> {

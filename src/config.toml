@@ -1,2 +1,2 @@
 [netbox]
-api_limit = "10"
+api_limit = "50"

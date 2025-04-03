@@ -24,7 +24,7 @@ pub struct ApiClient {
 #[derive(Debug, Deserialize, Clone)]
 pub struct NetBoxResponse<T> {
     count: i32,
-    next: String,
+    next: Option<String>,
     results: Vec<T>,
 }
 
@@ -77,39 +77,29 @@ impl ApiClient {
         T: for<'de> Deserialize<'de> + Debug,
     {
         let mut next_link = match id {
-            Some(id) => format!("{}/{}/{}", self.api_url, endpoint, id),
-            None => format!("{}/{}", self.api_url, endpoint),
+            Some(id) => Some(format!("{}/{}/{}", self.api_url, endpoint, id)),
+            None => Some(format!("{}/{}", self.api_url, endpoint)),
         };
-        let mut results: Vec<T> = Vec::new();
+        let mut results = Vec::new();
 
-        while !next_link.is_empty() {
+        while let Some(link) = &next_link {
+            println!("Link: {}", link);
             let response = self
                 .client
-                .get(&next_link)
+                .get(link)
                 .header("Authorization", format!("Token {}", self.api_key))
                 .header("Content-Type", "application/json")
                 .send()
                 .await?;
+            println!("Made request.");
 
-            match response.status() {
-                StatusCode::OK => {
-                    println!("Test before extraction");
-                    let response_data: NetBoxResponse<T> = response.json().await?;
-                    println!("Test after extraction");
-                    results.extend(response_data.results);
-                    if response_data.next.is_empty() {
-                        break;
-                    } else {
-                        next_link = response_data.next;
-                    }
-                }
-                _ => {
-                    eprintln!(
-                        "Failed to get data from {}: {}",
-                        next_link,
-                        response.status()
-                    );
-                }
+            if response.status().is_success() {
+                let response_data: NetBoxResponse<T> = response.json().await?;
+                results.extend(response_data.results);
+                next_link = response_data.next.clone().filter(|s| !s.is_empty());
+            } else {
+                eprintln!("Failed to get data: {:?}", response.status());
+                break;
             }
         }
 

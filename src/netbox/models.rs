@@ -1,4 +1,8 @@
-use crate::{cache::Cache, netbox::api::ApiClient};
+use crate::{
+    fetch::azure::{IntuneDevice, IntuneUser},
+    netbox::api::ApiClient,
+    LocalCache,
+};
 use async_trait::async_trait;
 use serde::{de::Error, Deserialize, Serialize};
 
@@ -14,10 +18,10 @@ pub struct ListResponse<T> {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Tag {
-    id: u32,
-    name: String,
-    slug: String,
-    color: String,
+    pub id: u32,
+    pub name: String,
+    pub slug: String,
+    pub color: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -37,9 +41,9 @@ impl Status {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Site {
-    id: Option<u32>,
-    name: String,
-    slug: String,
+    pub id: Option<u32>,
+    pub name: String,
+    pub slug: String,
 }
 
 impl Site {
@@ -92,39 +96,16 @@ pub struct VlanPrefix {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Device {
-    name: String,
-    id: Option<u32>,
-    device_type: DeviceType,
-    role: DeviceRole,
-    site: Site,
-    status: Status,
-    serial: Option<String>,
-    platform: Option<Platform>,
-    primary_ip4: Option<NetBoxIp4>,
-    tags: Option<Vec<Tag>>,
-}
-
-impl Device {
-    pub fn new(
-        name: String,
-        device_type: DeviceType,
-        role: DeviceRole,
-        site: Site,
-        status: Status,
-    ) -> Self {
-        Self {
-            name,
-            site,
-            status,
-            role,
-            device_type,
-            id: None,
-            serial: None,
-            platform: None,
-            primary_ip4: None,
-            tags: None,
-        }
-    }
+    pub name: String,
+    pub id: Option<u32>,
+    pub device_type: DeviceType,
+    pub role: DeviceRole,
+    pub site: Site,
+    pub status: Status,
+    pub serial: Option<String>,
+    pub platform: Option<Platform>,
+    pub primary_ip4: Option<NetBoxIp4>,
+    pub tags: Option<Vec<Tag>>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -136,9 +117,9 @@ pub struct Platform {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DeviceRole {
-    id: Option<u32>,
-    name: String,
-    slug: String,
+    pub id: Option<u32>,
+    pub name: String,
+    pub slug: String,
 }
 
 impl DeviceRole {
@@ -154,10 +135,10 @@ impl DeviceRole {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DeviceType {
-    manufacturer: Manufacturer,
-    id: Option<u32>,
-    model: String,
-    slug: String,
+    pub manufacturer: Manufacturer,
+    pub id: Option<u32>,
+    pub model: String,
+    pub slug: String,
 }
 
 impl DeviceType {
@@ -174,9 +155,9 @@ impl DeviceType {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Manufacturer {
-    id: Option<u32>,
-    name: String,
-    slug: String,
+    pub id: Option<u32>,
+    pub name: String,
+    pub slug: String,
 }
 
 impl Manufacturer {
@@ -204,7 +185,7 @@ pub struct DeviceList {
 pub struct Contact {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
-    pub display: Option<String>,
+    pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -221,6 +202,8 @@ pub struct ContactList {
 // IMPL TRAITS FOR MODELS
 //
 
+/*
+
 #[async_trait]
 pub trait NetBoxObject: Clone + Send + Sync + 'static {
     // Create in netbox and return object
@@ -230,7 +213,10 @@ pub trait NetBoxObject: Clone + Send + Sync + 'static {
     ) -> Result<Self, Box<dyn std::error::Error>>;
 
     // Create in local cache
-    async fn create_in_cache(&self, cache: &mut Cache) -> Result<(), Box<dyn std::error::Error>>;
+    async fn create_in_cache(
+        &self,
+        cache: &mut LocalCache,
+    ) -> Result<(), Box<dyn std::error::Error>>;
 
     // Get caching key
     fn cache_key(&self) -> String;
@@ -239,7 +225,7 @@ pub trait NetBoxObject: Clone + Send + Sync + 'static {
     async fn create_and_cache(
         &self,
         api_client: &ApiClient,
-        cache: &mut Cache,
+        cache: &mut LocalCache,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let created = self.create_in_netbox(api_client).await?;
         created.create_in_cache(cache).await?;
@@ -262,7 +248,10 @@ impl NetBoxObject for Device {
         Ok(res)
     }
 
-    async fn create_in_cache(&self, cache: &mut Cache) -> Result<(), Box<dyn std::error::Error>> {
+    async fn create_in_cache(
+        &self,
+        cache: &mut LocalCache,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let key = self.cache_key();
         cache.insert(key, self.clone());
         Ok(())
@@ -288,7 +277,10 @@ impl NetBoxObject for Contact {
         Ok(res)
     }
 
-    async fn create_in_cache(&self, cache: &mut Cache) -> Result<(), Box<dyn std::error::Error>> {
+    async fn create_in_cache(
+        &self,
+        cache: &mut LocalCache,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let key = self.cache_key();
         cache.insert(key, self.clone());
         Ok(())
@@ -297,5 +289,16 @@ impl NetBoxObject for Contact {
     fn cache_key(&self) -> String {
         //self.display
         String::new()
+    }
+}
+*/
+impl From<IntuneUser> for Contact {
+    fn from(user: IntuneUser) -> Self {
+        Contact {
+            id: None,
+            name: user.name,
+            email: user.mail,
+            title: user.title,
+        }
     }
 }
