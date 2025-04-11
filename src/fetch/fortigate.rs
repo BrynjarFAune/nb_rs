@@ -6,7 +6,7 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{fmt::Debug, fs, str::FromStr};
+use std::{fmt::Debug, fs, str::FromStr, usize};
 
 #[derive(Debug)]
 pub struct FortiGateClient {
@@ -17,7 +17,35 @@ pub struct FortiGateClient {
 
 #[derive(Debug, Deserialize)]
 pub struct FortiGateDevice {
-    mac: String,
+    pub mac: String,
+    pub is_online: bool,
+    pub fortiswitch_id: Option<String>,
+    pub fortiswitch_port_id: Option<usize>,
+    pub ipv4_address: Option<String>,
+    pub hardware_vendor: Option<String>,
+    pub os_name: Option<String>,
+    pub os_version: Option<String>,
+    pub hostname: Option<String>,
+    pub last_seen: usize,
+    pub dhcp_lease_status: Option<String>,
+    pub dhcp_lease_expire: Option<usize>,
+    pub dhcp_lease_lease_reserved: Option<bool>,
+    pub device_type: Option<String>,
+    pub online_interfaces: Option<Vec<String>>,
+    pub other_macs: Option<Vec<MacAddress>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MacAddress {
+    pub ipv4_address: Option<String>,
+    pub mac: String,
+    pub last_seen: usize,
+    pub is_online: bool,
+    pub fortiswitch_id: String,
+    pub fortiswitch_port_id: usize,
+    pub dhcp_lease_status: Option<String>,
+    pub dhcp_lease_expire: Option<usize>,
+    pub dhcp_lease_lease_reserved: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -8,6 +8,7 @@ pub struct Settings {
     pub netbox: NetBoxConfig,
     pub azure: AzureConfig,
     pub fortigate: FortiGateConfig,
+    pub nagiosxi: NagiosxiConfig,
     // add eset, azure, foritgate, ...
 }
 
@@ -30,6 +31,12 @@ pub struct AzureConfig {
 pub struct FortiGateConfig {
     pub url: String,
     pub token: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NagiosxiConfig {
+    pub api_key: String,
+    pub url: String,
 }
 
 pub fn load() -> Result<Settings, ConfigError> {

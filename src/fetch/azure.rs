@@ -15,7 +15,7 @@ pub struct AzureClient {
     url: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct IntuneDevice {
     #[serde(rename = "deviceName")]
     pub name: String,
