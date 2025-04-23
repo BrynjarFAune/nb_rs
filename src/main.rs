@@ -102,13 +102,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("consolidated device list: {}", devices.len());
 
-    let postable_devices = Arc::new(
-        devices
-            .into_iter()
-            .map(|(_, device)| PostDevice::from(device))
-            .collect::<Vec<_>>(),
-    );
-
     // Push data to netbox
     let mut handles = Vec::new();
 
@@ -130,26 +123,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    for device in postable_devices.iter() {
-        let dev = device.clone();
-        let permit = semaphore.clone().acquire_owned().await.unwrap();
-        let client = netbox_client.clone();
-
-        //let handle = task::spawn(async move {
-        // let result = client.post("dcim/devices", &dev).await;
-        // drop(permit);
-        // result
-        //});
-        //handles.push(handle);
-
-        println!("~ {} | skipping for now", &dev.name);
+    // Push devices and submodels
+    let mut device_tasks = Vec::new();
+    for (_, device) in devices {
+        let api = netbox_client.clone();
+        let cache = local_cache.clone();
+        let device_name = device.name.clone();
+        let task = tokio::spawn(async move {
+            if let Err(e) = device.push_to_netbox(&api, &cache).await {
+                eprintln!("Failed to push {}: {:?}", device_name, e);
+            }
+        });
+        device_tasks.push(task);
     }
 
     join_all(handles).await;
+    join_all(device_tasks).await;
 
-    // End script
     let timer = start_time.elapsed();
     println!("Time elapsed: {:.2?}", timer);
-
     Ok(())
 }

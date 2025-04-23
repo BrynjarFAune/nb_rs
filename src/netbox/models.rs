@@ -4,13 +4,32 @@ use crate::{
         fortigate::FortiGateDevice,
         nagiosxi::HostStatus,
     },
-    netbox::api::ApiClient,
+    netbox::api::{ApiClient, CreateTable},
     LocalCache,
 };
+use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use serde::{de::Error, Deserialize, Serialize};
+use std::fmt::Debug;
 
+#[async_trait]
+pub trait NetBoxModel: Send + Sync + Clone + Debug + Serialize + for<'de> Deserialize<'de> {
+    type Id: ToString + Clone;
+
+    fn get_id(&self) -> Option<Self::Id>;
+    fn get_slug(&self) -> String;
+    fn get_endpoint() -> &'static str;
+    fn set_id(&mut self, id: Self::Id);
+}
+
+#[async_trait]
+impl<T: NetBoxModel> CreateTable for T {
+    async fn create(&self, api: &ApiClient) -> Result<(), reqwest::Error> {
+        let _created: T = api.post(Self::get_endpoint(), self).await?;
+        Ok(())
+    }
+}
 //
 // GENERAL
 //
@@ -36,6 +55,27 @@ impl Tag {
             name,
             color: None,
         }
+    }
+}
+
+#[async_trait]
+impl NetBoxModel for Tag {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        self.slug.clone()
+    }
+
+    fn get_endpoint() -> &'static str {
+        "extras/tags"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
     }
 }
 
@@ -66,6 +106,27 @@ impl Site {
             name,
             slug,
         }
+    }
+}
+
+#[async_trait]
+impl NetBoxModel for Site {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        self.slug.clone()
+    }
+
+    fn get_endpoint() -> &'static str {
+        "dcim/sites"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
     }
 }
 
@@ -141,9 +202,9 @@ pub struct PostDevice {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Platform {
-    id: Option<u32>,
-    name: String,
-    slug: String,
+    pub id: Option<u32>,
+    pub name: String,
+    pub slug: String,
 }
 impl Platform {
     pub fn new(name: String) -> Self {
@@ -152,6 +213,27 @@ impl Platform {
             slug: name.to_lowercase(),
             name,
         }
+    }
+}
+
+#[async_trait]
+impl NetBoxModel for Platform {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        self.slug.clone()
+    }
+
+    fn get_endpoint() -> &'static str {
+        "dcim/platforms"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
     }
 }
 
@@ -170,6 +252,27 @@ impl DeviceRole {
             slug,
             id: None,
         }
+    }
+}
+
+#[async_trait]
+impl NetBoxModel for DeviceRole {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        self.slug.clone()
+    }
+
+    fn get_endpoint() -> &'static str {
+        "dcim/device-roles"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
     }
 }
 
@@ -193,6 +296,27 @@ impl DeviceType {
     }
 }
 
+#[async_trait]
+impl NetBoxModel for DeviceType {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        self.slug.clone()
+    }
+
+    fn get_endpoint() -> &'static str {
+        "dcim/device-types"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Manufacturer {
     pub id: Option<u32>,
@@ -208,6 +332,26 @@ impl Manufacturer {
             name,
             slug,
         }
+    }
+}
+#[async_trait]
+impl NetBoxModel for Manufacturer {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        self.slug.clone()
+    }
+
+    fn get_endpoint() -> &'static str {
+        "dcim/manufacturers"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
     }
 }
 
@@ -364,45 +508,86 @@ impl From<FortiGateDevice> for Device {
     }
 }
 
+// Note: Before converting Device to PostDevice, ensure_tags() should be called
+// to sync tags with NetBox and populate their IDs.
 impl From<Device> for PostDevice {
     fn from(value: Device) -> Self {
+        // Filter out tags without IDs - tags must be created in NetBox first
+        // before they can be used in PostDevice
         let id_tags: Vec<u32> = value
             .tags
             .unwrap_or_default()
             .into_iter()
-            .map(|tag| tag.id.expect("Need a valid tag id"))
+            .filter_map(|tag| tag.id)
             .collect();
+
+        // Use more descriptive error messages for missing components
         PostDevice {
             name: value.name,
             id: value.id,
             device_type: value
                 .device_type
                 .as_ref()
-                .map(|p| p.id.expect("Need a valid device type id"))
-                .expect("Missing device type"),
+                .and_then(|dt| dt.id)
+                .expect("Device type must be created in NetBox first (use ensure_components)"),
             role: value
                 .role
                 .as_ref()
-                .map(|p| p.id.expect("Need a valid device role id"))
-                .expect("Missing device role"),
+                .and_then(|r| r.id)
+                .expect("Device role must be created in NetBox first (use ensure_components)"),
             site: value
                 .site
                 .as_ref()
-                .map(|p| p.id.expect("Need a valid site id"))
-                .expect("Missing site"),
-            status: value.status.expect("Need a valid device status"),
+                .and_then(|s| s.id)
+                .expect("Site must be created in NetBox first (use ensure_components)"),
+            status: value.status.expect("Device status is required"),
             serial: value.serial,
-            // Optional / can be None or Some(id)
-            platform: value
-                .platform
-                .as_ref()
-                .map(|p| p.id.expect("Need a valid platform id")),
+            platform: value.platform.as_ref().and_then(|p| p.id),
             tags: id_tags,
         }
     }
 }
 
 impl Device {
+    pub async fn push_to_netbox(self, api: &ApiClient, cache: &LocalCache) -> Result<()> {
+        let mut device = self;
+        device.ensure_components(api, cache).await?;
+        let postable = PostDevice::from(device);
+        let _: PostDevice = api.post("dcim/devices", &postable).await?;
+        Ok(())
+    }
+
+    pub async fn ensure_components(&mut self, api: &ApiClient, cache: &LocalCache) -> Result<()> {
+        // First ensure device type and its manufacturer
+        if let Some(ref mut device_type) = self.device_type {
+            cache.ensure_device_type(device_type, api).await?;
+        }
+
+        // Then ensure role
+        if let Some(ref mut role) = self.role {
+            cache.ensure_role(role, api).await?;
+        }
+
+        // Then site
+        if let Some(ref mut site) = self.site {
+            cache.ensure_site(site, api).await?;
+        }
+
+        // Then platform
+        if let Some(ref mut platform) = self.platform {
+            cache.ensure_platform(platform, api).await?;
+        }
+
+        // Finally tags
+        if let Some(ref mut tags) = self.tags {
+            for tag in tags {
+                cache.ensure_tag(tag, api).await?;
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn merge_from_intune(&mut self, src: &IntuneDevice) {
         if self.serial.is_none() {
             self.serial = Some(src.serial.clone());
