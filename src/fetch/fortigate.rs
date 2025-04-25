@@ -15,7 +15,7 @@ pub struct FortiGateClient {
     url: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct FortiGateDevice {
     pub mac: String,
     pub is_online: bool,
@@ -35,7 +35,7 @@ pub struct FortiGateDevice {
     pub other_macs: Option<Vec<MacAddress>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct MacAddress {
     pub ipv4_address: Option<String>,
     pub mac: String,

@@ -1,0 +1,251 @@
+⚠ skipping `DESKTOP-FANGSTR`: no device_type after consolidation
+⚠ skipping `26:95:a2:4a:50:70`: no device_type after consolidation
+⚠ skipping `JAKOB-DESKTOP   `: no device_type after consolidation
+⚠ skipping `1e:d4:25:76:ef:c8`: no device_type after consolidation
+⚠ skipping `Android_a3aef92be5994ad995d24a67b066d4fa`: no device_type after consolidation
+⚠ skipping `88:ae:dd:1b:40:66`: no device_type after consolidation
+⚠ skipping `12:ab:53:99:33:df`: no device_type after consolidation
+⚠ skipping `ba:26:d6:7c:2e:a3`: no device_type after consolidation
+⚠ skipping `20:f5:43:10:68:ba`: no device_type after consolidation
+⚠ skipping `00:0a:83:08:17:2f`: no device_type after consolidation
+⚠ skipping `tos-vismacli08.dualog.no`: no device_type after consolidation
+⚠ skipping `92:38:04:03:44:0d`: no device_type after consolidation
+⚠ skipping `d4:76:a0:e5:c0:36`: no device_type after consolidation
+⚠ skipping `f2:fc:aa:ba:93:99`: no device_type after consolidation
+⚠ skipping `d0:3d:52:04:54:84`: no device_type after consolidation
+⚠ skipping `6a:90:12:1f:0d:41`: no device_type after consolidation
+⚠ skipping `06:5a:59:25:7a:78`: no device_type after consolidation
+⚠ skipping `ca:93:5c:00:cf:6a`: no device_type after consolidation
+⚠ skipping `ZenFone7-Pro`: no device_type after consolidation
+⚠ skipping `96:9c:44:31:0c:ea`: no device_type after consolidation
+⚠ skipping `e8:ed:d6:d3:75:f5`: no device_type after consolidation
+⚠ skipping `31776df3-58a0-4e5c-a4fc-a2073a7b27d5`: no device_type after consolidation
+⚠ skipping `dev-taloscp-01`: no device_type after consolidation
+⚠ skipping `00:0f:b6:08:2a:e3`: no device_type after consolidation
+⚠ skipping `00:0a:83:0a:24:1d`: no device_type after consolidation
+⚠ skipping `tos-vismacli02.dualog.no`: no device_type after consolidation
+⚠ skipping `n8n`: no device_type after consolidation
+⚠ skipping `22:d3:e4:05:3e:eb`: no device_type after consolidation
+⚠ skipping `04:d9:c8:6a:fa:b1`: no device_type after consolidation
+⚠ skipping `tos-vismacli05.dualog.no`: no device_type after consolidation
+⚠ skipping `LAPTOP-MORTEN`: no device_type after consolidation
+⚠ skipping `bc:24:11:28:ca:80`: no device_type after consolidation
+⚠ skipping `tos-vismacli01.dualog.no`: no device_type after consolidation
+⚠ skipping `d2:2b:d2:1d:56:cd`: no device_type after consolidation
+⚠ skipping `da:cc:77:80:13:27`: no device_type after consolidation
+⚠ skipping `ITEST`: no device_type after consolidation
+⚠ skipping `rusty`: no device_type after consolidation
+⚠ skipping `e8:1c:ba:d7:bc:66`: no device_type after consolidation
+⚠ skipping `6e:48:0d:46:07:c9`: no device_type after consolidation
+⚠ skipping `CHRISTIANPC`: no device_type after consolidation
+⚠ skipping `WIN-0LNUV07C25A`: no device_type after consolidation
+⚠ skipping `tos-okv-01.dualog.no`: no device_type after consolidation
+⚠ skipping `ba:74:fc:ff:54:da`: no device_type after consolidation
+⚠ skipping `52:72:f8:9d:a6:39`: no device_type after consolidation
+⚠ skipping `avacam-ahfz-x6ee-dtah`: no device_type after consolidation
+⚠ skipping `00:0a:83:08:34:7d`: no device_type after consolidation
+⚠ skipping `94:ff:3c:b0:36:3f`: no device_type after consolidation
+⚠ skipping `bc:24:11:ff:bd:88`: no device_type after consolidation
+⚠ skipping `4a:a4:de:51:9b:d1`: no device_type after consolidation
+⚠ skipping `tos-vismacli09.dualog.no`: no device_type after consolidation
+⚠ skipping `tos-vismacli11.dualog.no`: no device_type after consolidation
+⚠ skipping `94:ff:3c:22:42:de`: no device_type after consolidation
+⚠ skipping `d4:76:a0:c7:5d:e2`: no device_type after consolidation
+⚠ skipping `82:cb:fd:2c:2d:e8`: no device_type after consolidation
+⚠ skipping `DESKTOP-NVL9Q8S`: no device_type after consolidation
+⚠ skipping `bc:24:11:a3:ad:ff`: no device_type after consolidation
+⚠ skipping `NO-I5CD340226Q`: no device_type after consolidation
+⚠ skipping `bc:24:11:5a:3c:a2`: no device_type after consolidation
+⚠ skipping `e8:1c:ba:d5:e2:00`: no device_type after consolidation
+⚠ skipping `DESKTOP-7G59TI9.dualog.no`: no device_type after consolidation
+⚠ skipping `bc:24:11:fc:ec:a2`: no device_type after consolidation
+⚠ skipping `bc:24:11:83:d4:2f`: no device_type after consolidation
+⚠ skipping `tos-vismacli04.dualog.no`: no device_type after consolidation
+⚠ skipping `d0:3d:52:03:b2:45`: no device_type after consolidation
+⚠ skipping `00:0a:83:0a:24:1c`: no device_type after consolidation
+⚠ skipping `3e:83:43:03:62:53`: no device_type after consolidation
+⚠ skipping `c2:70:e5:8c:9e:b6`: no device_type after consolidation
+⚠ skipping `68:05:ca:0c:d8:6f`: no device_type after consolidation
+⚠ skipping `tos-aadc-01.dualog.no`: no device_type after consolidation
+⚠ skipping `tos-vismacli10`: no device_type after consolidation
+⚠ skipping `12:81:49:78:64:2a`: no device_type after consolidation
+⚠ skipping `DEVSCREEN`: no device_type after consolidation
+⚠ skipping `DESKTOP-DPTV`: no device_type after consolidation
+⚠ skipping `e2:73:0c:b9:9d:1e`: no device_type after consolidation
+⚠ skipping `ba:97:55:63:4a:ef`: no device_type after consolidation
+⚠ skipping `olex`: no device_type after consolidation
+⚠ skipping `WIN-QM3MA44OG2F`: no device_type after consolidation
+⚠ skipping `0a:a4:cc:a7:14:20`: no device_type after consolidation
+⚠ skipping `7a:23:11:79:dd:02`: no device_type after consolidation
+⚠ skipping `f6:e3:07:ea:d5:0c`: no device_type after consolidation
+⚠ skipping `tos-okv-02`: no device_type after consolidation
+⚠ skipping `32:92:b9:df:5b:39`: no device_type after consolidation
+⚠ skipping `d4:76:a0:e5:bf:aa`: no device_type after consolidation
+⚠ skipping `tos-dev-sec01.dualog.no`: no device_type after consolidation
+⚠ skipping `dev-talosw-03`: no device_type after consolidation
+⚠ skipping `tos-vismacli03.dualog.no`: no device_type after consolidation
+⚠ skipping `2e:37:47:54:e9:49`: no device_type after consolidation
+⚠ skipping `a0:36:bc:58:3b:e8`: no device_type after consolidation
+⚠ skipping `2c:cf:67:28:1b:e0`: no device_type after consolidation
+⚠ skipping `nb-plugin`: no device_type after consolidation
+⚠ skipping `TOS-QA-SEC01    `: no device_type after consolidation
+⚠ skipping `88:ae:dd:1b:69:41`: no device_type after consolidation
+⚠ skipping `fa:ea:18:e8:d3:d0`: no device_type after consolidation
+⚠ skipping `tos-vismacli11`: no device_type after consolidation
+⚠ skipping `DESKTOP-OHBUAE8`: no device_type after consolidation
+⚠ skipping `OKV-2022        `: no device_type after consolidation
+⚠ skipping `tos-vismacli06.dualog.no`: no device_type after consolidation
+⚠ skipping `e8:ed:d6:d3:78:4d`: no device_type after consolidation
+⚠ skipping `0c:29:8f:17:ec:ae`: no device_type after consolidation
+⚠ skipping `e6:b9:27:0e:f6:ac`: no device_type after consolidation
+⚠ skipping `7a:88:0c:1d:b0:fe`: no device_type after consolidation
+⚠ skipping `bc:24:11:d4:08:76`: no device_type after consolidation
+⚠ skipping `8a:87:2c:fd:f9:9e`: no device_type after consolidation
+⚠ skipping `98:ee:cb:98:2c:ca`: no device_type after consolidation
+⚠ skipping `3e:7b:ab:f4:d7:3a`: no device_type after consolidation
+⚠ skipping `94:ff:3c:22:43:1b`: no device_type after consolidation
+⚠ skipping `da:44:21:3a:da:c4`: no device_type after consolidation
+⚠ skipping `fa:7d:08:25:35:f2`: no device_type after consolidation
+⚠ skipping `82:d7:ea:d4:7d:18`: no device_type after consolidation
+⚠ skipping `06:1f:36:0f:69:50`: no device_type after consolidation
+❌ push_to_netbox for `Øystein’s MacBook Air` failed:
+   While ensuring sub-objects for `øystein’s macbook air`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DES_T470` failed:
+   While ensuring sub-objects for `des_t470`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `ASLAN` failed:
+   While ensuring sub-objects for `aslan`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `PL-JS` failed:
+   While ensuring sub-objects for `pl-js`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `LAPTOP-NIAS` failed:
+   While ensuring sub-objects for `laptop-nias`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DUALOGNADMAKNEW` failed:
+   While ensuring sub-objects for `dualognadmaknew`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DUALOG-SKJALG` failed:
+   While ensuring sub-objects for `dualog-skjalg`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `MINATI` failed:
+   While ensuring sub-objects for `minati`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DESKTOP-BA-MBER ` failed:
+   Creating new device `desktop-ba-mber `
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"__all__":["Device name must be unique per site."]}
+❌ push_to_netbox for `FE-11` failed:
+   While ensuring sub-objects for `fe-11`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DESKTOP-NadMak` failed:
+   While ensuring sub-objects for `desktop-nadmak`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `STUDENT4` failed:
+   While ensuring sub-objects for `student4`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `W11PROVIRTUAL` failed:
+   While ensuring sub-objects for `w11provirtual`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DESKTOP-JH      ` failed:
+   Creating new device `desktop-jh      `
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"__all__":["Device name must be unique per site."]}
+❌ push_to_netbox for `LAPTOP-F3LJQ7GL` failed:
+   While ensuring sub-objects for `laptop-f3ljq7gl`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `TRONDSEN` failed:
+   While ensuring sub-objects for `trondsen`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `INGVILDSPC` failed:
+   While ensuring sub-objects for `ingvildspc`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `SEBASTIAN` failed:
+   While ensuring sub-objects for `sebastian`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `INGEBRHI` failed:
+   While ensuring sub-objects for `ingebrhi`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `SMSCREEN` failed:
+   While ensuring sub-objects for `smscreen`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `PL-BL` failed:
+   While ensuring sub-objects for `pl-bl`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `QA-TASK-2022    ` failed:
+   Creating new device `qa-task-2022    `
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"__all__":["Device name must be unique per site."]}
+❌ push_to_netbox for `EF11` failed:
+   While ensuring sub-objects for `ef11`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `LAPTOP-JORN` failed:
+   While ensuring sub-objects for `laptop-jorn`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DESKTOP-VLGHA5R` failed:
+   While ensuring sub-objects for `desktop-vlgha5r`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `desktop-ba-02AZ` failed:
+   While ensuring sub-objects for `desktop-ba-02az`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DESKTOP-FJ-mber` failed:
+   While ensuring sub-objects for `desktop-fj-mber`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `desktop-ba-02QC` failed:
+   While ensuring sub-objects for `desktop-ba-02qc`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `OPS-L001` failed:
+   While ensuring sub-objects for `ops-l001`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `EF-LAPTOP` failed:
+   While ensuring sub-objects for `ef-laptop`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `FMJ_WORK_LAPTOP` failed:
+   While ensuring sub-objects for `fmj_work_laptop`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `desktop-dc-F051` failed:
+   While ensuring sub-objects for `desktop-dc-f051`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `DESKTOP-HUA94K9` failed:
+   While ensuring sub-objects for `desktop-hua94k9`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `SUPPORTPC01` failed:
+   While ensuring sub-objects for `supportpc01`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+❌ push_to_netbox for `desktop-ba-02BL` failed:
+   While ensuring sub-objects for `desktop-ba-02bl`
+   └─ caused by: ❌ NetBox returned 400 Bad Request:
+{"name":["platform with this name already exists."]}
+PS C:\Users\brynjar.aune\Proj\NetBox\netbox_ingester

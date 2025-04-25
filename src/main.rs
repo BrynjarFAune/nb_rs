@@ -11,8 +11,8 @@ use dotenv::dotenv;
 use fetch::{azure::IntuneUser, nagiosxi};
 use futures::{future::join_all, TryFutureExt};
 use netbox::models::{
-    self, Contact, ContactList, Device, DeviceRole, DeviceType, Manufacturer, PostDevice, Site,
-    Status, VirtualMachine,
+    self, Contact, ContactList, Device, DeviceRole, DeviceType, Manufacturer, NetBoxModel,
+    PostDevice, Site, Status, VirtualMachine,
 };
 use std::sync::Arc;
 use tokio::{
@@ -79,24 +79,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let devices = DashMap::<String, Device>::new();
 
     for dev in azure_devices {
-        let key = dev.name.to_lowercase();
+        let d = Device::from(dev.clone());
+        let key = d.get_cache_key();
         devices
             .entry(key.clone())
             .and_modify(|existing| existing.merge_from_intune(&dev))
-            .or_insert_with(|| Device::from(dev));
+            .or_insert(d);
     }
     println!("post intune consolidation list: {}", devices.len());
 
     for dev in fortigate_devices {
-        let key = dev
-            .hostname
-            .as_ref()
-            .map(|s| s.to_lowercase())
-            .unwrap_or_else(|| dev.mac.clone());
+        let mut d = Device::from(dev.clone());
+        let key = d.get_cache_key();
         devices
             .entry(key.clone())
             .and_modify(|existing| existing.merge_from_fortigate(&dev))
-            .or_insert_with(|| Device::from(dev));
+            .or_insert(d);
     }
     println!("post fortigate consolidation list: {}", devices.len());
 
@@ -105,17 +103,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Push data to netbox
     let mut handles = Vec::new();
 
-    for contact in azure_contacts {
-        if !local_cache.contacts.contains_key(&contact.name) {
+    for intune_user in azure_contacts {
+        let mut c: Contact = intune_user.into();
+        let key = c.get_cache_key();
+        if !local_cache.contacts.contains_key(&key) {
             let netbox_client = Arc::clone(&netbox_client);
             let permit = semaphore.clone().acquire_owned().await.unwrap();
 
             let handle = task::spawn(async move {
-                let tmp_contact: Contact = contact.into();
                 let result = netbox_client
-                    .post::<Contact, Contact>("tenancy/contacts", &tmp_contact)
+                    .post::<Contact, Contact>("tenancy/contacts", &c)
                     .await;
-                println!("++ Contact: {}", &tmp_contact.name);
+                println!("Uploaded contact: {}", &c.name);
                 drop(permit);
                 result
             });
@@ -126,12 +125,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Push devices and submodels
     let mut device_tasks = Vec::new();
     for (_, device) in devices {
+        let device_name = device.name.clone();
+        if device.device_type.is_none() {
+            eprintln!(
+                "⚠ skipping `{}`: no device_type after consolidation",
+                device_name
+            );
+            println!("{}: {:?}", device_name, device);
+            continue;
+        }
         let api = netbox_client.clone();
         let cache = local_cache.clone();
         let device_name = device.name.clone();
         let task = tokio::spawn(async move {
             if let Err(e) = device.push_to_netbox(&api, &cache).await {
-                eprintln!("Failed to push {}: {:?}", device_name, e);
+                eprintln!("❌ push_to_netbox for `{}` failed:", device_name);
+                // print the whole error chain
+                for (i, cause) in e.chain().enumerate() {
+                    if i == 0 {
+                        eprintln!("   {}", cause);
+                    } else {
+                        eprintln!("   └─ caused by: {}", cause);
+                    }
+                }
             }
         });
         device_tasks.push(task);
@@ -141,6 +157,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     join_all(device_tasks).await;
 
     let timer = start_time.elapsed();
+
+    // Go over cache for good measure
+    println!("{{");
+    println!("\"Device cache\": {{");
+    for dev in local_cache.devices.iter() {
+        println!("\"{}\": \"{}\",", dev.key(), dev.name);
+    }
+    println!("}}\n}}");
+
     println!("Time elapsed: {:.2?}", timer);
     Ok(())
 }

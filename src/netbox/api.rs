@@ -1,16 +1,19 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use futures::{stream, StreamExt};
 use reqwest::{Client, Error as ReqwestError, StatusCode};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, io::ErrorKind, sync::Arc};
+use std::{any::type_name, fmt::Debug, io::ErrorKind, sync::Arc};
 use tokio::sync::Semaphore;
 
-use crate::{config::NetBoxConfig, netbox::models};
+use crate::{
+    config::NetBoxConfig,
+    netbox::models::{self, PostDevice},
+};
 use async_trait::async_trait;
 
 #[async_trait]
 pub trait CreateTable: Send + Sync + std::fmt::Debug {
-    async fn create(&self, api: &ApiClient) -> Result<(), ReqwestError>;
+    async fn create(&self, api: &ApiClient) -> anyhow::Result<()>;
 }
 
 #[derive(Debug, Clone)]
@@ -83,7 +86,6 @@ impl ApiClient {
         let mut results = Vec::new();
 
         while let Some(link) = &next_link {
-            println!("Link: {}", link);
             let response = self
                 .client
                 .get(link)
@@ -91,35 +93,27 @@ impl ApiClient {
                 .header("Content-Type", "application/json")
                 .send()
                 .await?;
-            println!("Made request.");
 
             if response.status().is_success() {
                 let response_data: NetBoxResponse<T> = response.json().await?;
                 results.extend(response_data.results);
                 next_link = response_data.next.clone().filter(|s| !s.is_empty());
             } else {
-                eprintln!("Failed to get data: {:?}", response.status());
+                println!("Failed to get data: {:?}", response.status());
                 break;
             }
-        }
-
-        println!("len results: {}", results.len());
-        if results.len() > 0 {
-            println!("first result: {:?}", results.first());
         }
 
         Ok(results)
     }
 
     // Generic POST request
-    pub async fn post<T, B>(&self, endpoint: &str, body: &B) -> Result<T, ReqwestError>
+    pub async fn post<T, B>(&self, endpoint: &str, body: &B) -> Result<T>
     where
         T: for<'de> Deserialize<'de>,
         B: Serialize + Debug,
     {
         let url = format!("{}/{}/", self.api_url, endpoint);
-
-        println!("POST request: {} - {:?}", url, body);
 
         let response = self
             .client
@@ -128,8 +122,57 @@ impl ApiClient {
             .header("Content-Type", "application/json")
             .json(body)
             .send()
+            .await
+            .context("Failed to send POST request")?;
+
+        let status = response.status();
+        let text = response
+            .text()
+            .await
+            .context("❌ Failed to read response body")?;
+
+        if !status.is_success() {
+            return Err(anyhow::anyhow!("❌ NetBox returned {}:\n{}", status, text));
+        }
+
+        let parsed = serde_json::from_str::<T>(&text).context(format!(
+            "❌ Failed to parse NetBox JSON response:\n{}",
+            text
+        ))?;
+
+        Ok(parsed)
+
+        //response.json::<T>().await
+    }
+
+    // Generic PATCH request
+    pub async fn patch<T, B>(&self, endpoint: &str, body: &B) -> Result<T>
+    where
+        T: for<'de> Deserialize<'de>,
+        B: Serialize + Debug,
+    {
+        let url = format!("{}/{}/", self.api_url, endpoint);
+
+        let response = self
+            .client
+            .patch(&url)
+            .header("Authorization", format!("Token {}", self.api_key))
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
             .await?;
 
-        response.json::<T>().await
+        let status = response.status();
+        let text = response.text().await?;
+
+        if !status.is_success() {
+            return Err(anyhow::anyhow!("❌ NetBox returned {}:\n{}", status, text));
+        }
+
+        let parsed = serde_json::from_str::<T>(&text)?;
+
+        Ok(parsed)
+
+        //response.json::<T>().await
     }
 }

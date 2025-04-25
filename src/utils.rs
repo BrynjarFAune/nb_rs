@@ -18,3 +18,27 @@ where
         }
     }
 }
+
+pub fn sanitize_slug(input: &str) -> String {
+    // trim and lowercase input
+    let s = input.trim().to_lowercase();
+    let mut out = String::with_capacity(s.len());
+
+    // Turn non alphanumerics to - and drop brackets
+    for c in s.chars() {
+        if c.is_alphanumeric() {
+            out.push(c);
+        } else if c.is_ascii_whitespace() || c == '-' || c == '_' {
+            out.push('-');
+        }
+    }
+
+    // Collapse back to back dashes
+    let slug = out
+        .split('-')
+        .filter(|p| !p.is_empty())
+        .collect::<Vec<_>>()
+        .join("-");
+
+    slug.trim_matches('-').to_string()
+}

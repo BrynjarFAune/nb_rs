@@ -5,9 +5,10 @@ use crate::{
         nagiosxi::HostStatus,
     },
     netbox::api::{ApiClient, CreateTable},
+    utils::sanitize_slug,
     LocalCache,
 };
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use serde::{de::Error, Deserialize, Serialize};
@@ -21,11 +22,15 @@ pub trait NetBoxModel: Send + Sync + Clone + Debug + Serialize + for<'de> Deseri
     fn get_slug(&self) -> String;
     fn get_endpoint() -> &'static str;
     fn set_id(&mut self, id: Self::Id);
+
+    fn get_cache_key(&self) -> String {
+        self.get_slug()
+    }
 }
 
 #[async_trait]
 impl<T: NetBoxModel> CreateTable for T {
-    async fn create(&self, api: &ApiClient) -> Result<(), reqwest::Error> {
+    async fn create(&self, api: &ApiClient) -> Result<()> {
         let _created: T = api.post(Self::get_endpoint(), self).await?;
         Ok(())
     }
@@ -42,16 +47,18 @@ pub struct ListResponse<T> {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Tag {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub name: String,
     pub slug: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<String>,
 }
 impl Tag {
     pub fn new(name: String) -> Self {
         Self {
             id: None,
-            slug: name.to_lowercase(),
+            slug: sanitize_slug(&name),
             name,
             color: None,
         }
@@ -67,7 +74,7 @@ impl NetBoxModel for Tag {
     }
 
     fn get_slug(&self) -> String {
-        self.slug.clone()
+        sanitize_slug(&self.slug.clone())
     }
 
     fn get_endpoint() -> &'static str {
@@ -81,7 +88,7 @@ impl NetBoxModel for Tag {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "lowercase")]
-pub enum Status {
+pub enum StatusOptions {
     Active,
     Offline,
     Planned,
@@ -92,7 +99,19 @@ pub enum Status {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct Status {
+    value: StatusOptions,
+}
+
+impl Status {
+    pub fn from_value(value: StatusOptions) -> Self {
+        Status { value }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Site {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub name: String,
     pub slug: String,
@@ -100,7 +119,7 @@ pub struct Site {
 
 impl Site {
     pub fn new(name: String) -> Self {
-        let slug = name.to_lowercase().replace(" ", "-");
+        let slug = sanitize_slug(&name);
         Self {
             id: None,
             name,
@@ -136,6 +155,7 @@ impl NetBoxModel for Site {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct NetBoxIp4 {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub address: String,
 }
@@ -146,12 +166,35 @@ impl NetBoxIp4 {
     }
 }
 
+#[async_trait]
+impl NetBoxModel for NetBoxIp4 {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        sanitize_slug(&self.address.clone())
+    }
+
+    fn get_endpoint() -> &'static str {
+        "ipam/ip-addresses"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Prefix {
-    id: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    id: Option<u32>,
     prefix: String,
     status: Status,
     vlan: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<String>,
 }
 
@@ -160,6 +203,7 @@ pub struct Vlan {
     vlan_id: u32,
     name: String,
     status: Status,
+    #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<String>,
 }
 
@@ -187,14 +231,41 @@ pub struct Device {
     pub tags: Option<Vec<Tag>>,
 }
 
+#[async_trait]
+impl NetBoxModel for Device {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        self.name.to_lowercase()
+    }
+
+    fn get_cache_key(&self) -> String {
+        self.get_slug()
+    }
+
+    fn get_endpoint() -> &'static str {
+        "dcim/devices"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PostDevice {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub device_type: u32,
     pub role: u32,
     pub site: u32,
-    pub status: Status,
+    pub status: StatusOptions,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub serial: Option<String>,
     pub platform: Option<u32>,
     pub tags: Vec<u32>,
@@ -202,6 +273,7 @@ pub struct PostDevice {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Platform {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub name: String,
     pub slug: String,
@@ -210,7 +282,7 @@ impl Platform {
     pub fn new(name: String) -> Self {
         Self {
             id: None,
-            slug: name.to_lowercase(),
+            slug: sanitize_slug(&name),
             name,
         }
     }
@@ -225,7 +297,7 @@ impl NetBoxModel for Platform {
     }
 
     fn get_slug(&self) -> String {
-        self.slug.clone()
+        sanitize_slug(&self.slug)
     }
 
     fn get_endpoint() -> &'static str {
@@ -235,10 +307,15 @@ impl NetBoxModel for Platform {
     fn set_id(&mut self, id: Self::Id) {
         self.id = Some(id);
     }
+
+    fn get_cache_key(&self) -> String {
+        self.name.to_lowercase().into()
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DeviceRole {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub name: String,
     pub slug: String,
@@ -246,7 +323,7 @@ pub struct DeviceRole {
 
 impl DeviceRole {
     pub fn new(name: String) -> Self {
-        let slug = name.to_lowercase().replace(" ", "-");
+        let slug = sanitize_slug(&name);
         Self {
             name,
             slug,
@@ -279,6 +356,7 @@ impl NetBoxModel for DeviceRole {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DeviceType {
     pub manufacturer: Manufacturer,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub model: String,
     pub slug: String,
@@ -286,7 +364,7 @@ pub struct DeviceType {
 
 impl DeviceType {
     pub fn new(manufacturer: Manufacturer, model: String) -> Self {
-        let slug = model.to_lowercase().replace(" ", "-");
+        let slug = sanitize_slug(&model);
         Self {
             id: None,
             manufacturer,
@@ -305,7 +383,7 @@ impl NetBoxModel for DeviceType {
     }
 
     fn get_slug(&self) -> String {
-        self.slug.clone()
+        sanitize_slug(&self.slug)
     }
 
     fn get_endpoint() -> &'static str {
@@ -315,10 +393,19 @@ impl NetBoxModel for DeviceType {
     fn set_id(&mut self, id: Self::Id) {
         self.id = Some(id);
     }
+
+    fn get_cache_key(&self) -> String {
+        format!(
+            "{}--{}",
+            self.manufacturer.get_slug(),
+            sanitize_slug(&self.model)
+        )
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Manufacturer {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub name: String,
     pub slug: String,
@@ -326,7 +413,7 @@ pub struct Manufacturer {
 
 impl Manufacturer {
     pub fn new(name: String) -> Self {
-        let slug = name.to_lowercase().replace(" ", "-");
+        let slug = sanitize_slug(&name);
         Self {
             id: None,
             name,
@@ -334,6 +421,7 @@ impl Manufacturer {
         }
     }
 }
+
 #[async_trait]
 impl NetBoxModel for Manufacturer {
     type Id = u32;
@@ -343,7 +431,7 @@ impl NetBoxModel for Manufacturer {
     }
 
     fn get_slug(&self) -> String {
-        self.slug.clone()
+        sanitize_slug(&self.slug)
     }
 
     fn get_endpoint() -> &'static str {
@@ -376,6 +464,35 @@ pub struct Contact {
     pub title: Option<String>,
 }
 
+#[async_trait]
+impl NetBoxModel for Contact {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        self.id
+    }
+
+    fn get_slug(&self) -> String {
+        sanitize_slug(&self.name)
+    }
+
+    fn get_endpoint() -> &'static str {
+        "tenancy/contacts"
+    }
+
+    fn set_id(&mut self, id: Self::Id) {
+        self.id = Some(id);
+    }
+
+    fn get_cache_key(&self) -> String {
+        if let Some(ref mail) = self.email {
+            mail.to_lowercase().to_string()
+        } else {
+            self.get_slug()
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ContactList {
     pub count: Option<String>,
@@ -405,6 +522,27 @@ pub struct VirtualMachine {
     disk: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     tags: Option<Vec<Tag>>,
+}
+
+#[async_trait]
+impl NetBoxModel for VirtualMachine {
+    type Id = u32;
+
+    fn get_id(&self) -> Option<Self::Id> {
+        None // Replace with real ID logic if your struct gets populated with NetBox IDs
+    }
+
+    fn get_slug(&self) -> String {
+        sanitize_slug(&self.name)
+    }
+
+    fn get_endpoint() -> &'static str {
+        "virtualization/virtual-machines"
+    }
+
+    fn set_id(&mut self, _id: Self::Id) {
+        // Handle if needed
+    }
 }
 
 //
@@ -450,7 +588,7 @@ impl From<IntuneDevice> for Device {
             )),
             role: Some(DeviceRole::new("Desktop".to_string())),
             site: Some(Site::new("TOS".to_string())),
-            status: Some(Status::Active),
+            status: Some(Status::from_value(StatusOptions::Active)),
             serial: Some(value.serial),
             platform: Some(Platform::new(format!("{} {}", value.os, value.os_version))),
             primary_ip4: None,
@@ -461,12 +599,10 @@ impl From<IntuneDevice> for Device {
 
 impl From<FortiGateDevice> for Device {
     fn from(value: FortiGateDevice) -> Self {
-        let status = Some({
-            if value.is_online {
-                Status::Active
-            } else {
-                Status::Offline
-            }
+        let status = Some(if value.is_online {
+            Status::from_value(StatusOptions::Active)
+        } else {
+            Status::from_value(StatusOptions::Offline)
         });
         let platform = {
             if let Some(os) = value.os_name {
@@ -493,11 +629,12 @@ impl From<FortiGateDevice> for Device {
             (Some(ty), Some(vendor)) => Some(DeviceType::new(Manufacturer::new(vendor), ty)),
             _ => None,
         };
+        let role = Some(DeviceRole::new("Desktop".to_string()));
         Device {
             name,
             id: None,
             device_type,
-            role: None,
+            role,
             site: Some(Site::new("TOS".to_string())),
             status,
             serial: None,
@@ -510,10 +647,11 @@ impl From<FortiGateDevice> for Device {
 
 // Note: Before converting Device to PostDevice, ensure_tags() should be called
 // to sync tags with NetBox and populate their IDs.
-impl From<Device> for PostDevice {
-    fn from(value: Device) -> Self {
-        // Filter out tags without IDs - tags must be created in NetBox first
-        // before they can be used in PostDevice
+impl TryFrom<Device> for PostDevice {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Device) -> Result<Self> {
+        // collect tag-IDs
         let id_tags: Vec<u32> = value
             .tags
             .unwrap_or_default()
@@ -521,68 +659,98 @@ impl From<Device> for PostDevice {
             .filter_map(|tag| tag.id)
             .collect();
 
-        // Use more descriptive error messages for missing components
-        PostDevice {
+        // pull out each component, returning Err if missing
+        let device_type = value
+            .device_type
+            .as_ref()
+            .and_then(|dt| dt.id)
+            .ok_or_else(|| anyhow!("Device type must be created first (use ensure_components)"))?;
+
+        let role =
+            value.role.as_ref().and_then(|r| r.id).ok_or_else(|| {
+                anyhow!("Device role must be created first (use ensure_components)")
+            })?;
+
+        let site = value
+            .site
+            .as_ref()
+            .and_then(|s| s.id)
+            .ok_or_else(|| anyhow!("Site must be created first (use ensure_components)"))?;
+
+        let status = value
+            .status
+            .as_ref()
+            .map(|s| s.value.clone())
+            .ok_or_else(|| anyhow!("Device status is required"))?;
+
+        Ok(PostDevice {
             name: value.name,
             id: value.id,
-            device_type: value
-                .device_type
-                .as_ref()
-                .and_then(|dt| dt.id)
-                .expect("Device type must be created in NetBox first (use ensure_components)"),
-            role: value
-                .role
-                .as_ref()
-                .and_then(|r| r.id)
-                .expect("Device role must be created in NetBox first (use ensure_components)"),
-            site: value
-                .site
-                .as_ref()
-                .and_then(|s| s.id)
-                .expect("Site must be created in NetBox first (use ensure_components)"),
-            status: value.status.expect("Device status is required"),
+            device_type,
+            role,
+            site,
+            status,
             serial: value.serial,
             platform: value.platform.as_ref().and_then(|p| p.id),
             tags: id_tags,
-        }
+        })
     }
 }
 
 impl Device {
-    pub async fn push_to_netbox(self, api: &ApiClient, cache: &LocalCache) -> Result<()> {
-        let mut device = self;
-        device.ensure_components(api, cache).await?;
-        let postable = PostDevice::from(device);
-        let _: PostDevice = api.post("dcim/devices", &postable).await?;
-        Ok(())
-    }
+    pub async fn push_to_netbox(mut self, api: &ApiClient, cache: &LocalCache) -> Result<()> {
+        // 1️⃣ Normalize and log the cache key
+        let key = self.get_cache_key();
+        println!("🔍 [push_to_netbox] lookup key=`{}`", key);
 
-    pub async fn ensure_components(&mut self, api: &ApiClient, cache: &LocalCache) -> Result<()> {
-        // First ensure device type and its manufacturer
-        if let Some(ref mut device_type) = self.device_type {
-            cache.ensure_device_type(device_type, api).await?;
-        }
-
-        // Then ensure role
-        if let Some(ref mut role) = self.role {
-            cache.ensure_role(role, api).await?;
-        }
-
-        // Then site
-        if let Some(ref mut site) = self.site {
-            cache.ensure_site(site, api).await?;
-        }
-
-        // Then platform
-        if let Some(ref mut platform) = self.platform {
-            cache.ensure_platform(platform, api).await?;
-        }
-
-        // Finally tags
-        if let Some(ref mut tags) = self.tags {
-            for tag in tags {
-                cache.ensure_tag(tag, api).await?;
+        // 2️⃣ Try cache
+        if let Some(cached) = cache.devices.get(&key) {
+            if let Some(cached_id) = cached.get_id() {
+                println!("✅ [push_to_netbox] cache HIT `{}` → id={}", key, cached_id);
+                self.id = Some(cached_id);
             }
+        } else {
+            println!("❌ [push_to_netbox] cache MISS `{}`", key);
+        }
+
+        // 3️⃣ Ensure all related NetBox objects (types, roles, tags, etc.) exist
+        //self.ensure_components(api, cache).await?;
+        cache
+            .ensure_device_components(&mut self, api)
+            .await
+            .context(format!("While ensuring sub-objects for `{}`", key))?;
+
+        // 4️⃣ Build the payload struct
+        let postable: PostDevice = PostDevice::try_from(self.clone())
+            .context(format!("Failed to build PostDevice for `{}`", key))?;
+
+        // ─────────────────────────────────────────────
+        // 💡 **DEBUG: dump the exact JSON you'll send**
+        let json_payload = serde_json::to_string_pretty(&postable)?;
+        println!("🗳️  Payload JSON:\n{}", json_payload);
+        // ─────────────────────────────────────────────
+
+        // 5️⃣ Decide: PATCH if we already have an id, else POST
+        if let Some(id) = self.id {
+            let endpoint = format!("dcim/devices/{}/", id);
+            let _updated: Device = api
+                .patch(&endpoint, &postable)
+                .await
+                .context(format!("patching device `{}` (id={})", key, id))?;
+            println!("🔄 [push_to_netbox] updated `{}` → id={}", key, id);
+        } else {
+            let created: Device = api
+                .post("dcim/devices/", &postable)
+                .await
+                .context(format!("Creating new device `{}`", key))?;
+            let created_id = created
+                .get_id()
+                .expect("NetBox must return an ID on creation");
+            println!("✅ [push_to_netbox] created `{}` → id={}", key, created_id);
+
+            // 6️⃣ Insert into cache under the same normalized key
+            cache.devices.insert(key.clone(), created.clone());
+            self.id = Some(created_id);
         }
 
         Ok(())
@@ -596,7 +764,7 @@ impl Device {
             self.platform = Some(Platform {
                 id: None,
                 name: src.os.clone().into(),
-                slug: src.os.clone().into(),
+                slug: sanitize_slug(&src.os),
             })
         }
         if self.role.is_none() {
@@ -622,22 +790,27 @@ impl Device {
                 self.platform = Some(Platform {
                     id: None,
                     name: os.to_string(),
-                    slug: os.to_string(),
+                    slug: sanitize_slug(&os.to_string()),
                 })
             }
         }
 
         if src.is_online {
-            self.status = Some(Status::Active);
+            self.status = Some(Status::from_value(StatusOptions::Active));
         }
 
         if self.device_type.is_none() {
             let device_type = match (src.device_type.clone(), src.hardware_vendor.clone()) {
                 (Some(ty), Some(vendor)) => Some(DeviceType::new(Manufacturer::new(vendor), ty)),
-                _ => None,
+                _ => Some(DeviceType::new(
+                    Manufacturer::new("default".into()),
+                    "default".into(),
+                )),
             };
             if device_type.is_some() {
                 self.device_type = device_type;
+            } else {
+                println!("DeviceType is somehow None");
             }
         }
 
@@ -647,7 +820,7 @@ impl Device {
         }
     }
 
-    pub fn merge_from_eset(&mut self, src: Device) {}
+    //pub fn merge_from_eset(&mut self, src: Device) {}
 
     fn push_tag(&mut self, tag: Tag) {
         match &mut self.tags {
@@ -667,9 +840,9 @@ impl Device {
         let days = (Utc::now() - parsed).num_days();
 
         Some(if days <= 7 {
-            Status::Active
+            Status::from_value(StatusOptions::Active)
         } else {
-            Status::Offline
+            Status::from_value(StatusOptions::Offline)
         })
     }
 }
