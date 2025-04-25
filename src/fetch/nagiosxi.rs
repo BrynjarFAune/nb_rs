@@ -1,5 +1,5 @@
 use anyhow::Ok;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use serde::Deserialize;
 
 use crate::config::NagiosxiConfig;

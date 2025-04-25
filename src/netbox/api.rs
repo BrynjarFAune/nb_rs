@@ -1,14 +1,11 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use futures::{stream, StreamExt};
-use reqwest::{Client, Error as ReqwestError, StatusCode};
+use reqwest::{Client, Error as ReqwestError};
 use serde::{Deserialize, Serialize};
-use std::{any::type_name, fmt::Debug, io::ErrorKind, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 use tokio::sync::Semaphore;
 
-use crate::{
-    config::NetBoxConfig,
-    netbox::models::{self, PostDevice},
-};
+use crate::config::NetBoxConfig;
 use async_trait::async_trait;
 
 #[async_trait]

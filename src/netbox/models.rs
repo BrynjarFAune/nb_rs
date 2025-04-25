@@ -10,8 +10,8 @@ use crate::{
 };
 use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
-use chrono::{DateTime, Duration, Utc};
-use serde::{de::Error, Deserialize, Serialize};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 #[async_trait]
@@ -726,8 +726,8 @@ impl Device {
 
         // ─────────────────────────────────────────────
         // 💡 **DEBUG: dump the exact JSON you'll send**
-        let json_payload = serde_json::to_string_pretty(&postable)?;
-        println!("🗳️  Payload JSON:\n{}", json_payload);
+        // let json_payload = serde_json::to_string_pretty(&postable)?;
+        // println!("🗳️  Payload JSON:\n{}", json_payload);
         // ─────────────────────────────────────────────
 
         // 5️⃣ Decide: PATCH if we already have an id, else POST

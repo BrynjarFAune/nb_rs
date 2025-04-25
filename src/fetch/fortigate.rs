@@ -4,9 +4,8 @@ use reqwest::{
     header::{HeaderMap, HeaderValue},
     Certificate, Client, StatusCode,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::{fmt::Debug, fs, str::FromStr, usize};
+use serde::Deserialize;
+use std::{fmt::Debug, fs, usize};
 
 #[derive(Debug)]
 pub struct FortiGateClient {

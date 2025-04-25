@@ -117,15 +117,6 @@ impl AzureClient {
             })?
             .to_string();
         Ok(token)
-
-        /*
-                let res_json: Value = res.json().await?;
-                let token = res_json["access_token"]
-                    .as_str()
-                    .ok_or_else(|| anyhow::anyhow!("Failed to retrieve token"))?
-                    .to_string();
-                Ok(token)
-        */
     }
 
     pub async fn fetch_users(&self) -> Result<Vec<IntuneUser>, reqwest::Error> {
